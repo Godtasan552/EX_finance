@@ -58,16 +58,21 @@ def dashboard(request):
     filter_category = request.GET.get('filter_category', '')
     filter_date = request.GET.get('filter_date', '')
 
+    print(f"Filter Type: {filter_type}")
+    print(f"Filter Category: {filter_category}")
+    print(f"Filter Date: {filter_date}")
+
     if filter_type:
         transactions = transactions.filter(type=filter_type)
     if filter_category:
         transactions = transactions.filter(category__name=filter_category)
     if filter_date:
         try:
-            date_filter = datetime.strptime(filter_date, '%Y-%m-%d')
-            transactions = transactions.filter(date__date=date_filter.date())
+            date_filter = datetime.strptime(filter_date, '%Y-%m-%d').date()  # แปลงให้เป็น datetime.date
+            transactions = transactions.filter(date=date_filter)  # ใช้ date ตรง ๆ ไม่ต้องใช้ __date
         except ValueError:
             pass
+
 
     # Handle form submission
     if request.method == 'POST':
