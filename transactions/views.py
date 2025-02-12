@@ -49,48 +49,54 @@ def user_logout(request):
 # Dashboard
 # Dashboard
 # Dashboard
-@login_required
+@login_required 
 def dashboard(request):
-    # กรองรายการ transactions ของผู้ใช้ที่ล็อกอินอยู่
     transactions = Transaction.objects.filter(user=request.user)
-
-    # รับค่าจาก GET ที่เกี่ยวกับการกรอง
+    
+    # Handle filters
     filter_type = request.GET.get('filter_type', '')
     filter_category = request.GET.get('filter_category', '')
     filter_date = request.GET.get('filter_date', '')
 
-    # ตรวจสอบค่า filter_type และ filter_category ว่ามีการกรองหรือไม่
     if filter_type:
         transactions = transactions.filter(type=filter_type)
     if filter_category:
         transactions = transactions.filter(category__name=filter_category)
-
-    # ตรวจสอบ filter_date หากมีการกรองวันที่
     if filter_date:
         try:
-            # แปลงวันที่จาก filter_date ให้เป็นรูปแบบ datetime
             date_filter = datetime.strptime(filter_date, '%Y-%m-%d')
-            # ใช้ __date ถ้าฟิลด์เป็น DateTimeField
             transactions = transactions.filter(date__date=date_filter.date())
         except ValueError:
-            return render(request, 'dashboard.html', {
-                'error': 'Invalid date format. Please use YYYY-MM-DD.',
-                'transactions': transactions
-            })
+            pass
 
-    # ดึงข้อมูล categories
+    # Handle form submission
+    if request.method == 'POST':
+        form = TransactionForm(request.POST)
+        if form.is_valid():
+            transaction = form.save(commit=False)
+            transaction.user = request.user
+            transaction.save()
+            return redirect('dashboard')
+    else:
+        form = TransactionForm()
+
+    # Order transactions by date
+    transactions = transactions.order_by('-date')
     categories = Category.objects.all()
 
-    return render(request, 'dashboard.html', {
+    context = {
         'transactions': transactions,
+        'form': form,
+        'categories': categories,
         'filter_type': filter_type,
         'filter_category': filter_category,
         'filter_date': filter_date,
-        'categories': categories
-    })
+    }
+    
+    if form.errors:
+        context['form_errors'] = form.errors
 
-
-# Add Category
+    return render(request, 'dashboard.html', context)
 # Add Category
 @login_required
 def add_category(request):
