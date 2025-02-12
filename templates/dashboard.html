@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 
-
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
@@ -12,6 +11,9 @@
         <h4 class="mb-0">
           <i class="fas fa-chart-bar me-2"></i>Income & Expense Dashboard
         </h4>
+        <a href="{% url 'generate_report' %}" class="btn btn-primary btn-sm">
+          <i class="fas fa-plus me-1"></i>Report
+        </a>
         <a href="{% url 'add_category' %}" class="btn btn-primary btn-sm">
           <i class="fas fa-plus me-1"></i>Add Category
         </a>
@@ -23,8 +25,8 @@
             <label class="form-label">Type</label>
             <select name="filter_type" class="form-select">
               <option value="">All</option>
-              <option value="income" {% if request.GET.filter_type == 'income' %}selected{% endif %}>Income</option>
-              <option value="expense" {% if request.GET.filter_type == 'expense' %}selected{% endif %}>Expense</option>
+              <option value="income" {% if filter_type == 'income' %}selected{% endif %}>Income</option>
+              <option value="expense" {% if filter_type == 'expense' %}selected{% endif %}>Expense</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -32,7 +34,7 @@
             <select name="filter_category" class="form-select">
               <option value="">All</option>
               {% for category in categories %}
-              <option value="{{ category.name }}" {% if category.name == request.GET.filter_category %}selected{% endif %}>
+              <option value="{{ category.name }}" {% if filter_category == category.name %}selected{% endif %}>
                 {{ category.name }}
               </option>
               {% endfor %}
@@ -40,7 +42,7 @@
           </div>
           <div class="col-md-3">
             <label class="form-label">Date</label>
-            <input type="date" name="filter_date" class="form-control" value="{{ request.GET.filter_date }}" />
+            <input type="date" name="filter_date" class="form-control" value="{{ filter_date }}" />
           </div>
           <div class="col-md-3">
             <label class="form-label">&nbsp;</label>
@@ -49,6 +51,13 @@
             </button>
           </div>
         </form>
+
+        <!-- Display Filter Results -->
+        <div class="filters-summary mb-4">
+          <p><strong>Filter Type:</strong> {{ filter_type|default:"All" }}</p>
+          <p><strong>Filter Category:</strong> {{ filter_category|default:"All" }}</p>
+          <p><strong>Filter Date:</strong> {{ filter_date|default:"All" }}</p>
+        </div>
 
         <!-- Add Transaction Form -->
         <div class="card mb-4">
@@ -93,34 +102,45 @@
                 <thead>
                   <tr>
                     <th>Type</th>
+                    <th>Description</th>
+                    <th>Category</th>
                     <th>Amount</th>
                     <th>Date</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {% for transaction in transactions %}
-                  <tr class="transaction-item">
-                    <td>
-                      <span class="badge {% if transaction.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
-                        {{ transaction.type }}
-                      </span>
-                    </td>
-                    <td>${{ transaction.amount }}</td>
-                    <td>{{ transaction.date|date:"d M Y" }}</td>
-                    <td>
-                      <div class="dropdown">
-                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                          <i class="fas fa-cogs"></i> Actions
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                          <li><a class="dropdown-item" href="{% url 'transaction_edit' transaction.id %}"><i class="fas fa-edit"></i> Edit</a></li>
-                          <li><a class="dropdown-item" href="{% url 'transaction_delete' transaction.id %}"><i class="fas fa-trash"></i> Delete</a></li>
-                        </ul>
-                      </div>
-                    </td>
-                  </tr>
-                  {% endfor %}
+                  {% if transactions %}
+                    {% for transaction in transactions %}
+                    <tr class="transaction-item">
+                        <td>
+                            <span class="badge {% if transaction.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ transaction.type }}
+                            </span>
+                        </td>
+                        <td>{{ transaction.description }}</td>
+                        <td>{{ transaction.category }}</td>
+                        <td>${{ transaction.amount }}</td>
+                        <td>{{ transaction.date|date:"d M Y" }}</td>
+                        
+                        <td>
+                             <div class="dropdown">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-cogs"></i> Actions
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <li><a class="dropdown-item" href="{% url 'transaction_edit' transaction.id %}"><i class="fas fa-edit"></i> Edit</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'transaction_delete' transaction.id %}"><i class="fas fa-trash"></i> Delete</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                      <p>No transactions found for the selected filters.</p>
+                    </tr>
+                {% endif %}
                 </tbody>
               </table>
             </div>

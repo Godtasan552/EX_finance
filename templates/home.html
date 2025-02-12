@@ -2,9 +2,16 @@
 
 {% block title %}Home{% endblock %}
 
-{% block header %}Welcome to Income & Expense Management{% endblock %}
+{% block header %}
+    <div class="jumbotron bg-primary text-white text-center p-5">
+        <h1>Welcome to Income & Expense Management</h1>
+        <p class="lead">Manage your finances easily</p>
+    </div>
+{% endblock %}
 
 {% block content %}
-    <a href="{% url 'login' %}">Login</a> |
-    <a href="{% url 'register' %}">Register</a>
+    <div class="container text-center">
+        <a href="{% url 'login' %}" class="btn btn-primary btn-lg mx-2">Login</a> |
+        <a href="{% url 'register' %}" class="btn btn-secondary btn-lg mx-2">Register</a>
+    </div>
 {% endblock %}

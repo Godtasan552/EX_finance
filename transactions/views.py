@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from datetime import datetime
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
+from django.db.models import Sum
 
 def home(request):
     return render(request, 'home.html')
@@ -50,9 +51,10 @@ def user_logout(request):
 # Dashboard
 @login_required
 def dashboard(request):
+    # กรองรายการ transactions ของผู้ใช้ที่ล็อกอินอยู่
     transactions = Transaction.objects.filter(user=request.user)
-    
-    # Filter transactions based on date, category, or type (income/expense)
+
+    # รับค่าจาก GET ที่เกี่ยวกับการกรอง
     filter_type = request.GET.get('filter_type', '')
     filter_category = request.GET.get('filter_category', '')
     filter_date = request.GET.get('filter_date', '')
@@ -66,7 +68,9 @@ def dashboard(request):
     # ตรวจสอบ filter_date หากมีการกรองวันที่
     if filter_date:
         try:
+            # แปลงวันที่จาก filter_date ให้เป็นรูปแบบ datetime
             date_filter = datetime.strptime(filter_date, '%Y-%m-%d')
+            # ใช้ __date ถ้าฟิลด์เป็น DateTimeField
             transactions = transactions.filter(date__date=date_filter.date())
         except ValueError:
             return render(request, 'dashboard.html', {
@@ -74,19 +78,16 @@ def dashboard(request):
                 'transactions': transactions
             })
 
-    if request.method == 'POST':
-        form = TransactionForm(request.POST)
-        if form.is_valid():
-            transaction = form.save(commit=False)
-            transaction.user = request.user
-            transaction.save()
-            return redirect('dashboard')
-    else:
-        form = TransactionForm()
-    
+    # ดึงข้อมูล categories
     categories = Category.objects.all()
 
-    return render(request, 'dashboard.html', {'transactions': transactions, 'form': form, 'categories': categories})
+    return render(request, 'dashboard.html', {
+        'transactions': transactions,
+        'filter_type': filter_type,
+        'filter_category': filter_category,
+        'filter_date': filter_date,
+        'categories': categories
+    })
 
 
 # Add Category
@@ -109,7 +110,6 @@ def add_category(request):
 # Generate Reports
 @login_required
 def generate_report(request):
-    # Example: Generate monthly report
     start_date = request.GET.get('start_date', '')
     end_date = request.GET.get('end_date', '')
 
@@ -118,14 +118,19 @@ def generate_report(request):
     if start_date and end_date:
         transactions = transactions.filter(date__range=[start_date, end_date])
 
-    # ประมวลผลข้อมูลเชิงสถิติเพื่อสร้างรายงาน (เช่น การรวมยอดรายรับและรายจ่าย)
     total_income = transactions.filter(type='income').aggregate(total=Sum('amount'))['total'] or 0
     total_expense = transactions.filter(type='expense').aggregate(total=Sum('amount'))['total'] or 0
+    balance = total_income - total_expense
+    
+    return render(request, 'generate_report.html', {
+        'total_income': total_income,
+        'total_expense': total_expense,
+        'transactions': transactions,  # ส่ง transactions ไปด้วย
+        'start_date': start_date,
+        'end_date': end_date,
+        'balance': balance,
+    })
 
-    # คุณสามารถสร้างรายงานในรูปแบบ PDF หรือ Excel ได้ที่นี่
-    return render(request, 'report.html', {'total_income': total_income, 'total_expense': total_expense})
-
-# View/Update/Delete Transactions
 @login_required
 def transaction_edit(request, transaction_id):
     transaction = get_object_or_404(Transaction, id=transaction_id, user=request.user)
