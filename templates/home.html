@@ -1,28 +1,63 @@
-{% extends 'base.html' %} {% block title %}Home{% endblock %} {% block header %}
-<div class="jumbotron bg-primary text-white text-center p-5">
-  <h1>Welcome to Income & Expense Management</h1>
-  <p class="lead">Manage your finances easily</p>
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block header %}
+<div class="jumbotron text-white text-center p-5" style="background: linear-gradient(135deg, #4CAF50, #2E7D32); border-radius: 10px;">
+  <h1 class="display-4">Welcome to Income & Expense Management</h1>
+  <p class="lead">Track and manage your finances with ease</p>
 </div>
-{% endblock %} {% block content %}
-<div class="container text-center">
-  {% comment %}
-  <a href="{% url 'login' %}" class="btn btn-primary btn-lg mx-2">Login</a> |
-  <a href="{% url 'register' %}" class="btn btn-secondary btn-lg mx-2"
-    >Register</a
-  >
-  {% endcomment %}
-  <div class="container mt-4 main-content">
-    {% if user.is_authenticated %}
-    <div class="welcome-section">
-      <div class="welcome-icon">
-        <i class="fas fa-chart-line"></i>
-      </div>
-      <div>
-        <h2 class="mb-0">Welcome back, {{ user.username }}!</h2>
-        <p class="text-muted mb-0">Track your finances with ease</p>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  {% if user.is_authenticated %}
+  <div class="text-center mb-4">
+    <h2 class="mb-3">Welcome back, {{ user.username }}! 👋</h2>
+    <p class="text-muted">Keep track of your financial health with real-time insights.</p>
+  </div>
+
+  <!-- Section: Financial Overview -->
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <h5 class="card-title text-success">Total Income</h5>
+          <h2 class="fw-bold">฿15,000</h2>
+        </div>
       </div>
     </div>
-    {% endif %}
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <h5 class="card-title text-danger">Total Expenses</h5>
+          <h2 class="fw-bold">฿8,500</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <h5 class="card-title text-primary">Balance</h5>
+          <h2 class="fw-bold">฿6,500</h2>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Navigation Buttons -->
+  <div class="text-center mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg mx-2">Go to Dashboard</a>
+
+  </div>
+
+  {% else %}
+  <div class="text-center">
+    <h2 class="mb-4">Get Started with Income & Expense Management</h2>
+    <p class="text-muted">Sign in or create an account to start managing your finances.</p>
+    <a href="{% url 'login' %}" class="btn btn-primary btn-lg mx-2">Login</a>
+    <a href="{% url 'register' %}" class="btn btn-secondary btn-lg mx-2">Register</a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

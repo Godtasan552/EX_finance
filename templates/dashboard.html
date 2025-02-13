@@ -108,6 +108,48 @@
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-list me-2"></i>Transactions</h5>
           </div>
+          <div>
+            <form method="GET" class="row g-3 mb-4">
+              <!-- Filter by Type -->
+              <div class="col-md-3">
+                <label for="filter_type" class="form-label">Type</label>
+                <select id="filter_type" name="filter_type" class="form-select" aria-label="Filter by Type">
+                  <option value="">All</option>
+                  <option value="income" {% if filter_type == 'income' %}selected{% endif %}>Income</option>
+                  <option value="expense" {% if filter_type == 'expense' %}selected{% endif %}>Expense</option>
+                </select>
+              </div>
+              
+              <!-- Filter by Category -->
+              <div class="col-md-3">
+                <label for="filter_category" class="form-label">Category</label>
+                <select id="filter_category" name="filter_category" class="form-select" aria-label="Filter by Category">
+                  <option value="">All</option>
+                  {% for category in categories %}
+                    <option value="{{ category.name }}" {% if filter_category == category.name %}selected{% endif %}>
+                      {{ category.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+        
+              <!-- Filter by Date -->
+              <div class="col-md-3">
+                <label for="filter_date" class="form-label">Date</label>
+                <input type="date" id="filter_date" name="filter_date" class="form-control" value="{{ filter_date|default:'' }}" aria-label="Filter by Date"/>
+              </div>
+        
+              <!-- Filter Button -->
+              <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary d-block">
+                  <i class="fas fa-filter me-1"></i>Filter
+                </button>
+              </div>
+            </form>
+          </div>
+        
+          <!-- Transactions List -->
           <div class="card-body transaction-list">
             <div class="table-responsive">
               <table class="table table-hover">
@@ -125,39 +167,39 @@
                   {% if transactions %}
                     {% for transaction in transactions %}
                     <tr class="transaction-item">
-                        <td>
-                            <span class="badge {% if transaction.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
-                                {{ transaction.type }}
-                            </span>
-                        </td>
-                        <td>{{ transaction.description }}</td>
-                        <td>{{ transaction.category }}</td>
-                        <td>{{ transaction.amount|floatformat:2 }} ฿</td>
-                        <td>{{ transaction.date|date:"d M Y" }}</td>
-                        
-                        <td>
-                             <div class="dropdown">
-                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-cogs"></i> Actions
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <li><a class="dropdown-item" href="{% url 'transaction_edit' transaction.id %}"><i class="fas fa-edit"></i> Edit</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'transaction_delete' transaction.id %}"><i class="fas fa-trash"></i> Delete</a></li>
-                                </ul>
-                            </div>
-                        </td>
+                      <td>
+                        <span class="badge {% if transaction.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
+                          {{ transaction.type }}
+                        </span>
+                      </td>
+                      <td>{{ transaction.description }}</td>
+                      <td>{{ transaction.category }}</td>
+                      <td>{{ transaction.amount|floatformat:2 }} ฿</td>
+                      <td>{{ transaction.date|date:"d M Y" }}</td>
+                      <td>
+                        <div class="dropdown">
+                          <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Transaction Actions">
+                            <i class="fas fa-cogs"></i> Actions
+                          </button>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <li><a class="dropdown-item" href="{% url 'transaction_edit' transaction.id %}"><i class="fas fa-edit"></i> Edit</a></li>
+                            <li><a class="dropdown-item" href="{% url 'transaction_delete' transaction.id %}"><i class="fas fa-trash"></i> Delete</a></li>
+                          </ul>
+                        </div>
+                      </td>
                     </tr>
                     {% endfor %}
-                {% else %}
+                  {% else %}
                     <tr>
                       <td colspan="6">No transactions found for the selected filters.</td>
                     </tr>
-                {% endif %}
+                  {% endif %}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
+        
       </div>
     </div>
   </div>
