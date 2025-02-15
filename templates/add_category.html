@@ -32,40 +32,47 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("category-form");
-    const categoryIdInput = document.getElementById("category_id");
-    const nameInput = document.getElementById("id_name");
-    const typeInput = document.getElementById("id_type");
-    const submitBtn = document.getElementById("submit-btn");
-    const cancelBtn = document.getElementById("cancel-btn");
-
-    document.querySelectorAll(".edit-btn").forEach(button => {
-      button.addEventListener("click", function () {
-        const categoryId = this.dataset.id;
-        const categoryName = this.dataset.name;
-        const categoryType = this.dataset.type;
-
-        categoryIdInput.value = categoryId;
-        nameInput.value = categoryName;
-        typeInput.value = categoryType;
-
-        submitBtn.textContent = "Update Category";
-        submitBtn.classList.replace("btn-primary", "btn-success");
-        cancelBtn.classList.remove("d-none");
-      });
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("category-form");
+        const categoryIdInput = document.getElementById("category_id");
+        const nameInput = document.getElementById("id_name");
+        const typeInput = document.getElementById("id_type");
+        const submitBtn = document.getElementById("submit-btn");
+        const cancelBtn = document.getElementById("cancel-btn");
+    
+        // ตรวจสอบว่า input มีอยู่จริงก่อนใช้งาน
+        if (!form || !categoryIdInput || !nameInput || !typeInput || !submitBtn || !cancelBtn) {
+            console.error("One or more elements not found. Check your HTML structure.");
+            return;
+        }
+    
+        document.querySelectorAll(".edit-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const categoryId = this.dataset.id;
+                const categoryName = this.dataset.name;
+                const categoryType = this.dataset.type;
+    
+                categoryIdInput.value = categoryId;
+                nameInput.value = categoryName;
+                typeInput.value = categoryType;
+    
+                submitBtn.textContent = "Update Category";
+                submitBtn.classList.replace("btn-primary", "btn-success");
+                cancelBtn.classList.remove("d-none");
+            });
+        });
+    
+        cancelBtn.addEventListener("click", function () {
+            categoryIdInput.value = "";
+            nameInput.value = "";
+            typeInput.value = "";
+    
+            submitBtn.textContent = "Add Category";
+            submitBtn.classList.replace("btn-success", "btn-primary");
+            cancelBtn.classList.add("d-none");
+        });
     });
-
-    cancelBtn.addEventListener("click", function () {
-      categoryIdInput.value = "";
-      nameInput.value = "";
-      typeInput.value = "";
-
-      submitBtn.textContent = "Add Category";
-      submitBtn.classList.replace("btn-success", "btn-primary");
-      cancelBtn.classList.add("d-none");
-    });
-  });
+    
 </script>
 
 {% endblock %}

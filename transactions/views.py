@@ -4,11 +4,13 @@ from django.contrib.auth.decorators import login_required
 from .models import Transaction, Category
 from .forms import SignUpForm, TransactionForm, CategoryForm
 from django.http import HttpResponse,JsonResponse
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
 from django.contrib import messages
+from django.utils.timezone import now
+
 def home(request):
     return render(request, 'home.html')
 
@@ -48,41 +50,56 @@ def user_logout(request):
 
 # Dashboard
 
-@login_required 
-def dashboard(request):
-    transactions = Transaction.objects.filter(user=request.user).order_by('-date', '-id')  # เรียงจากใหม่ไปเก่า
-    
-    # Handle filters
-    filter_type = request.GET.get('filter_type', '')
-    filter_category = request.GET.get('filter_category', '')
-    filter_date = request.GET.get('filter_date', '')
 
-    if filter_type:
-        transactions = transactions.filter(type=filter_type)
-    if filter_category:
-        transactions = transactions.filter(category__name=filter_category)
-    if filter_date:
-        try:
-            date_filter = datetime.strptime(filter_date, '%Y-%m-%d').date()
-            transactions = transactions.filter(date=date_filter)
-        except ValueError:
-            pass
+@login_required
+def dashboard(request):
+    # ดึงค่าปัจจุบันหรือค่าที่ผู้ใช้เลือก
+    current_month = request.GET.get('month')
+    current_year = request.GET.get('year')
+
+    today = now().date()
+    if not current_month or not current_year:
+        current_month = today.month
+        current_year = today.year
+    else:
+        current_month = int(current_month)
+        current_year = int(current_year)
+
+    # หาวันแรกและวันสุดท้ายของเดือนที่เลือก
+    first_day = datetime(current_year, current_month, 1).date()
+    next_month = first_day + timedelta(days=32)  # ข้ามไปเดือนถัดไป
+    last_day = datetime(next_month.year, next_month.month, 1).date() - timedelta(days=1)
+
+    # กรองรายการเฉพาะเดือนที่เลือก
+    transactions = Transaction.objects.filter(
+        user=request.user,
+        date__range=[first_day, last_day]
+    ).order_by('-date', '-id')
+
+    # คำนวณรายรับ-รายจ่ายเฉพาะเดือนที่เลือก
+    total_income = transactions.filter(type='income').aggregate(total=Sum('amount'))['total'] or 0
+    total_expense = transactions.filter(type='expense').aggregate(total=Sum('amount'))['total'] or 0
+    balance = total_income - total_expense
+
+    # คำนวณเดือนก่อนหน้าและถัดไป
+    prev_month = first_day - timedelta(days=1)
+    next_month = last_day + timedelta(days=1)
 
     categories = Category.objects.all()
-    form = TransactionForm()
-
+    
     context = {
         'transactions': transactions,
-        'form': form,
         'categories': categories,
-        'filter_type': filter_type,
-        'filter_category': filter_category,
-        'filter_date': filter_date,
+        'total_income': total_income,
+        'total_expense': total_expense,
+        'balance': balance,
+        'current_month': current_month,
+        'current_year': current_year,
+        'prev_month': prev_month.month,
+        'prev_year': prev_month.year,
+        'next_month': next_month.month,
+        'next_year': next_month.year,
     }
-    
-    if form.errors:
-        context['form_errors'] = form.errors
-
     return render(request, 'dashboard.html', context)
 
 @login_required

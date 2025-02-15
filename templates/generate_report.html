@@ -3,24 +3,66 @@
 {% block title %}Generate Report{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <h1>Generate Report</h1>
-        <form method="GET" action="{% url 'generate_report' %}" class="mb-4">
-            <label for="start_date" class="form-label">Start Date:</label>
-            <input type="date" name="start_date" class="form-control" value="{{ start_date }}" />
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h1 class="text-center mb-4 text-primary">
+            <i class="fas fa-chart-line"></i> Generate Report
+        </h1>
 
-            <label for="end_date" class="form-label">End Date:</label>
-            <input type="date" name="end_date" class="form-control" value="{{ end_date }}" />
+        <!-- 🔍 Form สำหรับเลือกวันที่ -->
+        <form method="GET" action="{% url 'generate_report' %}" class="row g-3">
+            <div class="col-md-5">
+                <label for="start_date" class="form-label fw-bold">📅 Start Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
 
-            <button type="submit" class="btn btn-primary mt-3">Generate Report</button>
+            <div class="col-md-5">
+                <label for="end_date" class="form-label fw-bold">📅 End Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Generate
+                </button>
+            </div>
         </form>
+    </div>
 
-        {% if transactions %}
-            <h2>Report Results</h2>
-            <p>Displaying results from {{ start_date }} to {{ end_date }}</p>
+    {% if transactions %}
+        <!-- 📊 สรุปยอดรายรับรายจ่าย -->
+        <div class="row text-center mt-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm p-3 bg-success text-white rounded">
+                    <h5>💰 Total Income</h5>
+                    <h3 class="fw-bold">{{ total_income }} ฿</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm p-3 bg-danger text-white rounded">
+                    <h5>💸 Total Expense</h5>
+                    <h3 class="fw-bold">{{ total_expense }} ฿</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm p-3 bg-info text-white rounded">
+                    <h5>📊 Balance</h5>
+                    <h3 class="fw-bold">{{ balance }} ฿</h3>
+                </div>
+            </div>
+        </div>
 
-            <table class="table table-bordered">
-                <thead>
+        <!-- 📊 กราฟสรุปรายรับรายจ่าย -->
+        <div class="card mt-4 p-3 shadow-lg">
+            <h4 class="text-center">📊 Transaction Summary</h4>
+            <canvas id="reportChart"></canvas>
+        </div>
+
+        <!-- 📋 รายการธุรกรรม -->
+        <div class="card mt-4 p-3 shadow-lg">
+            <h4 class="text-center">📋 Transaction List</h4>
+            <table class="table table-hover mt-3">
+                <thead class="table-dark text-center">
                     <tr>
                         <th>Date</th>
                         <th>Category</th>
@@ -30,23 +72,68 @@
                 </thead>
                 <tbody>
                     {% for transaction in transactions %}
-                        <tr>
+                        <tr class="text-center">
                             <td>{{ transaction.date }}</td>
                             <td>{{ transaction.category.name }}</td>
-                            <td>{{ transaction.type }}</td>
-                            <td>{{ transaction.amount }}</td>
+                            <td>
+                                <span class="badge {% if transaction.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ transaction.type|title }}
+                                </span>
+                            </td>
+                            <td class="fw-bold">{{ transaction.amount }} ฿</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    {% else %}
+        <div class="alert alert-warning mt-4">
+            <i class="fas fa-exclamation-circle"></i> No transactions found for the selected period.
+        </div>
+    {% endif %}
+</div>
 
-            <h3>Total Income: {{ total_income }} Bath</h3>
-            <h3>Total Expense: {{ total_expense }}Bath</h3>
-            <h3>Balance: {{ balance }}Bath</h3>
+<!-- 📌 Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById("reportChart").getContext("2d");
 
+        const transactionData = {
+            labels: [{% for transaction in transactions %}"{{ transaction.date }}",{% endfor %}], 
+            datasets: [
+                {
+                    label: "Income",
+                    data: [{% for transaction in transactions %}{% if transaction.type == 'income' %}{{ transaction.amount }},{% else %}0,{% endif %}{% endfor %}],
+                    backgroundColor: "rgba(75, 192, 192, 0.6)",
+                    borderColor: "rgba(75, 192, 192, 1)",
+                    borderWidth: 1
+                },
+                {
+                    label: "Expense",
+                    data: [{% for transaction in transactions %}{% if transaction.type == 'expense' %}{{ transaction.amount }},{% else %}0,{% endif %}{% endfor %}],
+                    backgroundColor: "rgba(255, 99, 132, 0.6)",
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 1
+                }
+            ]
+        };
 
-        {% else %}
-            <p>No transactions found for the selected period.</p>
-        {% endif %}
-    </div>
+        new Chart(ctx, {
+            type: "bar",
+            data: transactionData,
+            options: {
+                responsive: true,
+                scales: {
+                    x: { beginAtZero: true },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    });
+</script>
+
+<!-- 🔗 Font Awesome (ไอคอนสวยๆ) -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
 {% endblock %}
