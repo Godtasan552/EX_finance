@@ -1,25 +1,71 @@
-{% extends 'base.html' %} 
-{% block title %}Add Category{% endblock %}
- {% block content %}
+{% extends 'base.html' %}
+{% block title %}Manage Categories{% endblock %}
+{% block content %}
+
 <div class="container mt-4">
-  <h1>Add New Category</h1>
-  <form method="POST">
-    {% csrf_token %} {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Add Category</button>
+  <h1>Manage Categories</h1>
+
+  <form method="POST" id="category-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" id="category_id" name="category_id"> <!-- ใช้เก็บ ID ของหมวดหมู่ที่จะแก้ไข -->
+    <button type="submit" class="btn btn-primary" id="submit-btn">Add Category</button>
+    <button type="button" class="btn btn-secondary d-none" id="cancel-btn">Cancel</button>
   </form>
-  <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3"
-    >Back to Dashboard</a>
-</div>
-<div>
+
+  <h2 class="mt-4">Category List</h2>
+  <ul class="list-group">
     {% for category in categories %}
     <li class="list-group-item d-flex justify-content-between align-items-center">
-        {{ category.name }} - {{ category.get_type_display }}
-        <a href="{% url 'delete_category' category.id %}" class="btn btn-danger btn-sm"
-           onclick="return confirm('คุณต้องการลบ {{ category.name }} ใช่หรือไม่?');">
-            🗑️ ลบ
-        </a>
+      {{ category.name }} - {{ category.get_type_display }}
+      <div>
+        <button class="btn btn-warning btn-sm edit-btn" 
+                data-id="{{ category.id }}" 
+                data-name="{{ category.name }}" 
+                data-type="{{ category.type }}">
+          ✏️ แก้ไข
+        </button>
+      </div>
     </li>
-{% endfor %}
-
+    {% endfor %}
+  </ul>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("category-form");
+    const categoryIdInput = document.getElementById("category_id");
+    const nameInput = document.getElementById("id_name");
+    const typeInput = document.getElementById("id_type");
+    const submitBtn = document.getElementById("submit-btn");
+    const cancelBtn = document.getElementById("cancel-btn");
+
+    document.querySelectorAll(".edit-btn").forEach(button => {
+      button.addEventListener("click", function () {
+        const categoryId = this.dataset.id;
+        const categoryName = this.dataset.name;
+        const categoryType = this.dataset.type;
+
+        categoryIdInput.value = categoryId;
+        nameInput.value = categoryName;
+        typeInput.value = categoryType;
+
+        submitBtn.textContent = "Update Category";
+        submitBtn.classList.replace("btn-primary", "btn-success");
+        cancelBtn.classList.remove("d-none");
+      });
+    });
+
+    cancelBtn.addEventListener("click", function () {
+      categoryIdInput.value = "";
+      nameInput.value = "";
+      typeInput.value = "";
+
+      submitBtn.textContent = "Add Category";
+      submitBtn.classList.replace("btn-success", "btn-primary");
+      cancelBtn.classList.add("d-none");
+    });
+  });
+</script>
+
 {% endblock %}

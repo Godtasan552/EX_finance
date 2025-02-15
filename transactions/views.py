@@ -88,21 +88,26 @@ def dashboard(request):
 @login_required
 def add_category(request):
     if request.method == 'POST':
-        form = CategoryForm(request.POST)
-        if form.is_valid():
-            category_name = form.cleaned_data['name']
-            if Category.objects.filter(name=category_name).exists():
-                messages.error(request, 'Category already exists')
-            else:
+        category_id = request.POST.get('category_id')  # รับค่า ID ของหมวดหมู่ที่ต้องการแก้ไข
+        if category_id:
+            category = get_object_or_404(Category, id=category_id)
+            form = CategoryForm(request.POST, instance=category)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Category updated successfully!')
+                return redirect('add_category')
+        else:
+            form = CategoryForm(request.POST)
+            if form.is_valid():
                 form.save()
                 messages.success(request, 'Category added successfully!')
-            return redirect('add_category')
+                return redirect('add_category')
     else:
         form = CategoryForm()
 
-    categories = Category.objects.all()  # ดึง Category ทั้งหมดมาแสดง
+    categories = Category.objects.all()  
     return render(request, 'add_category.html', {'form': form, 'categories': categories})
-# Generate Reports
+
 @login_required
 def generate_report(request):
     start_date = request.GET.get('start_date', '')
@@ -146,24 +151,17 @@ def transaction_delete(request, transaction_id):
     transaction.delete()
     return redirect('dashboard')
 
-@login_required
-def delete_category(request, category_id):
-    category = get_object_or_404(Category, id=category_id)
 
-    # ตรวจสอบว่าหมวดหมู่นี้ถูกใช้ในธุรกรรมหรือไม่
-    if Transaction.objects.filter(category=category).exists():
-        messages.error(request, 'This category is in use and cannot be deleted.')
-    else:
-        category.delete()
-        messages.success(request, 'Category deleted successfully!')
-
-    return redirect('add_category')  # กลับไปที่หน้าเพิ่มหมวดหมู่
-
-
+def get_categories(request):
+    type_filter = request.GET.get('type', '')
+    categories = Category.objects.filter(type=type_filter) if type_filter else Category.objects.all()
+    data = {"categories": [{"id": cat.id, "name": cat.name} for cat in categories]}
+    return JsonResponse(data)
 
 
 @login_required
 def add_transaction(request):
+    categories = Category.objects.all()  # ดึงข้อมูลหมวดหมู่ทั้งหมด
     if request.method == 'POST':
         form = TransactionForm(request.POST)
         if form.is_valid():
@@ -174,5 +172,4 @@ def add_transaction(request):
     else:
         form = TransactionForm()
 
-    return render(request, 'add_transaction.html', {'form': form})
-
+    return render(request, 'add_transaction.html', {'form': form, 'categories': categories})
