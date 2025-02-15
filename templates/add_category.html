@@ -1,15 +1,25 @@
-{% extends 'base.html' %}
-
+{% extends 'base.html' %} 
 {% block title %}Add Category{% endblock %}
+ {% block content %}
+<div class="container mt-4">
+  <h1>Add New Category</h1>
+  <form method="POST">
+    {% csrf_token %} {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Add Category</button>
+  </form>
+  <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3"
+    >Back to Dashboard</a>
+</div>
+<div>
+    {% for category in categories %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ category.name }} - {{ category.get_type_display }}
+        <a href="{% url 'delete_category' category.id %}" class="btn btn-danger btn-sm"
+           onclick="return confirm('คุณต้องการลบ {{ category.name }} ใช่หรือไม่?');">
+            🗑️ ลบ
+        </a>
+    </li>
+{% endfor %}
 
-{% block content %}
-    <div class="container mt-4">
-        <h1>Add New Category</h1>
-        <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">Add Category</button>
-        </form>
-        <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
-    </div>
+</div>
 {% endblock %}

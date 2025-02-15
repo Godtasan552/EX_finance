@@ -2,11 +2,18 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Category(models.Model):
+    CATEGORY_TYPE_CHOICES = [
+        ('income', 'Income'),
+        ('expense', 'Expense'),
+    ]
+    
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
+    type = models.CharField(max_length=10, choices=CATEGORY_TYPE_CHOICES)  # เพิ่มฟิลด์นี้
 
     def __str__(self):
         return self.name
+
 
 class Transaction(models.Model):
     TYPE_CHOICES = [

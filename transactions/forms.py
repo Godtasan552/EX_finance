@@ -49,13 +49,28 @@ class TransactionForm(forms.ModelForm):
     )
 
 
-
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['name', 'description']  # กำหนดฟิลด์ที่ต้องการในฟอร์ม
+        fields = ['name', 'description', 'type']
 
-class TransactionFilterForm(forms.Form):
-    start_date = forms.DateField(required=False)
-    end_date = forms.DateField(required=False)
-    category = forms.CharField(required=False)
+
+class TransactionForm(forms.ModelForm):
+    class Meta:
+        model = Transaction
+        fields = ['amount', 'date', 'type', 'description', 'category']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['category'].queryset = Category.objects.none()  # เริ่มต้นเป็นว่าง
+
+        if 'type' in self.data:
+            try:
+                category_type = self.data.get('type')
+                self.fields['category'].queryset = Category.objects.filter(type=category_type)
+            except (ValueError, TypeError):
+                pass

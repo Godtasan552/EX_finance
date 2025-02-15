@@ -10,6 +10,7 @@ from transactions.views import (
     transaction_delete,
     transaction_edit,
     add_transaction,
+    delete_category,
 )
 
 urlpatterns = [
@@ -23,4 +24,5 @@ urlpatterns = [
     path("transaction/delete/<int:transaction_id>/", transaction_delete, name="transaction_delete"),
     path("transaction/edit/<int:transaction_id>/", transaction_edit, name="transaction_edit"),
     path('add_transaction/', add_transaction, name='add_transaction'),
+    path('category/delete/<int:category_id>/', delete_category, name='delete_category'),
 ]

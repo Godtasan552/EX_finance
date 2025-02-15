@@ -3,12 +3,12 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from .models import Transaction, Category
 from .forms import SignUpForm, TransactionForm, CategoryForm
-from django.http import HttpResponse
+from django.http import HttpResponse,JsonResponse
 from datetime import datetime
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
-
+from django.contrib import messages
 def home(request):
     return render(request, 'home.html')
 
@@ -47,8 +47,7 @@ def user_logout(request):
     return redirect('home')
 
 # Dashboard
-# Dashboard
-# Dashboard
+
 @login_required 
 def dashboard(request):
     transactions = Transaction.objects.filter(user=request.user).order_by('-date', '-id')  # เรียงจากใหม่ไปเก่า
@@ -92,15 +91,17 @@ def add_category(request):
         form = CategoryForm(request.POST)
         if form.is_valid():
             category_name = form.cleaned_data['name']
-            # ตรวจสอบ category ที่ชื่อซ้ำ
             if Category.objects.filter(name=category_name).exists():
-                return render(request, 'add_category.html', {'form': form, 'error': 'Category already exists'})
-            form.save()
-            return redirect('dashboard')
+                messages.error(request, 'Category already exists')
+            else:
+                form.save()
+                messages.success(request, 'Category added successfully!')
+            return redirect('add_category')
     else:
         form = CategoryForm()
-    return render(request, 'add_category.html', {'form': form})
 
+    categories = Category.objects.all()  # ดึง Category ทั้งหมดมาแสดง
+    return render(request, 'add_category.html', {'form': form, 'categories': categories})
 # Generate Reports
 @login_required
 def generate_report(request):
@@ -148,13 +149,17 @@ def transaction_delete(request, transaction_id):
 @login_required
 def delete_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
-    
-    # ตรวจสอบว่าหมวดหมู่นี้มีการใช้งานใน Transactions หรือไม่
-    if category.transactions.exists():
-        return render(request, 'dashboard.html', {'error': 'This category is in use and cannot be deleted.'})
-    
-    category.delete()
-    return redirect('dashboard')
+
+    # ตรวจสอบว่าหมวดหมู่นี้ถูกใช้ในธุรกรรมหรือไม่
+    if Transaction.objects.filter(category=category).exists():
+        messages.error(request, 'This category is in use and cannot be deleted.')
+    else:
+        category.delete()
+        messages.success(request, 'Category deleted successfully!')
+
+    return redirect('add_category')  # กลับไปที่หน้าเพิ่มหมวดหมู่
+
+
 
 
 @login_required
@@ -170,3 +175,4 @@ def add_transaction(request):
         form = TransactionForm()
 
     return render(request, 'add_transaction.html', {'form': form})
+

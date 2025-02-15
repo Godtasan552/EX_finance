@@ -51,4 +51,26 @@
     </div>
   </div>
 </div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      let typeField = document.querySelector("select[name='type']");
+      let categoryField = document.querySelector("select[name='category']");
+  
+      function updateCategories() {
+          let selectedType = typeField.value;
+          fetch(`/get_categories/?type=${selectedType}`)
+              .then(response => response.json())
+              .then(data => {
+                  categoryField.innerHTML = "";
+                  data.categories.forEach(category => {
+                      let option = new Option(category.name, category.id);
+                      categoryField.appendChild(option);
+                  });
+              });
+      }
+  
+      typeField.addEventListener("change", updateCategories);
+  });
+  </script>
+  
 {% endblock %}
