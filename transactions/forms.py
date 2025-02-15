@@ -1,9 +1,8 @@
 
-from .models import Category
+from .models import Category,Transaction
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Transaction
 from django.core.exceptions import ValidationError
 
 class SignUpForm(UserCreationForm):
@@ -37,9 +36,17 @@ class TransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
         fields = ['amount', 'date', 'type', 'description', 'category']
-    
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),  # ปรับให้ description ขนาดเท่ากัน
+        }
+
     # เพิ่มตัวเลือก category ให้ผู้ใช้เลือกจากฐานข้อมูล
-    category = forms.ModelChoiceField(queryset=Category.objects.all(), empty_label="Select Category")
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.all(),
+        empty_label="Select Category",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
 
 
 
