@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Add Transaction{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="mb-0">
+          <i class="fas fa-plus-circle me-2"></i> Add New Transaction
+        </h4>
+      </div>
+      <div class="card-body">
+        <form method="POST" class="row g-3">
+          {% csrf_token %}
+          {% if form_errors %}
+          <div class="col-12">
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                {% for field, errors in form_errors.items %}
+                  {% for error in errors %}
+                    <li>{{ field }}: {{ error }}</li>
+                  {% endfor %}
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          {% endif %}
+          {% for field in form %}
+          <div class="col-md-6">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field|add_class:"form-control" }}
+            {% if field.help_text %}
+            <small class="form-text text-muted">{{ field.help_text }}</small>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save me-1"></i> Add Transaction
+            </button>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

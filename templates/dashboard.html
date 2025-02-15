@@ -18,6 +18,9 @@
           <a href="{% url 'add_category' %}" class="btn btn-success btn-sm">
             <i class="fas fa-plus me-1"></i> Add Category
           </a>
+          <a href="{% url 'add_transaction' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i> Add Transaction
+          </a>
         </div>
       </div>
       <div class="card-body">
@@ -62,92 +65,14 @@
           <p><strong>Filter Date:</strong> {{ filter_date|default:"All" }}</p>
         </div> {% endcomment %}
 
-        <!-- Add Transaction Form -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-plus-circle me-2"></i>Add New Transaction
-                </h5>
-            </div>
-            <div class="card-body">
-                <form method="POST" class="row g-3">
-                    {% csrf_token %}
-                    {% if form_errors %}
-                    <div class="col-12">
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                {% for field, errors in form_errors.items %}
-                                    {% for error in errors %}
-                                        <li>{{ field }}: {{ error }}</li>
-                                    {% endfor %}
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% for field in form %}
-                    <div class="col-md-4">
-                        <label class="form-label">{{ field.label }}</label>
-                        {{ field|add_class:"form-control" }}
-                        {% if field.help_text %}
-                        <small class="form-text text-muted">{{ field.help_text }}</small>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i>Add Transaction
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+
 
         <!-- Transactions List -->
         <div class="card">
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-list me-2"></i>Transactions</h5>
           </div>
-          <div>
-            <form method="GET" class="row g-3 mb-4">
-              <!-- Filter by Type -->
-              <div class="col-md-3">
-                <label for="filter_type" class="form-label">Type</label>
-                <select id="filter_type" name="filter_type" class="form-select" aria-label="Filter by Type">
-                  <option value="">All</option>
-                  <option value="income" {% if filter_type == 'income' %}selected{% endif %}>Income</option>
-                  <option value="expense" {% if filter_type == 'expense' %}selected{% endif %}>Expense</option>
-                </select>
-              </div>
-              
-              <!-- Filter by Category -->
-              <div class="col-md-3">
-                <label for="filter_category" class="form-label">Category</label>
-                <select id="filter_category" name="filter_category" class="form-select" aria-label="Filter by Category">
-                  <option value="">All</option>
-                  {% for category in categories %}
-                    <option value="{{ category.name }}" {% if filter_category == category.name %}selected{% endif %}>
-                      {{ category.name }}
-                    </option>
-                  {% endfor %}
-                </select>
-              </div>
-        
-              <!-- Filter by Date -->
-              <div class="col-md-3">
-                <label for="filter_date" class="form-label">Date</label>
-                <input type="date" id="filter_date" name="filter_date" class="form-control" value="{{ filter_date|default:'' }}" aria-label="Filter by Date"/>
-              </div>
-        
-              <!-- Filter Button -->
-              <div class="col-md-3">
-                <label class="form-label">&nbsp;</label>
-                <button type="submit" class="btn btn-primary d-block">
-                  <i class="fas fa-filter me-1"></i>Filter
-                </button>
-              </div>
-            </form>
-          </div>
+
         
           <!-- Transactions List -->
           <div class="card-body transaction-list">

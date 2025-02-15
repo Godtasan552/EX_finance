@@ -51,16 +51,12 @@ def user_logout(request):
 # Dashboard
 @login_required 
 def dashboard(request):
-    transactions = Transaction.objects.filter(user=request.user)
+    transactions = Transaction.objects.filter(user=request.user).order_by('-date', '-id')  # เรียงจากใหม่ไปเก่า
     
     # Handle filters
     filter_type = request.GET.get('filter_type', '')
     filter_category = request.GET.get('filter_category', '')
     filter_date = request.GET.get('filter_date', '')
-
-    print(f"Filter Type: {filter_type}")
-    print(f"Filter Category: {filter_category}")
-    print(f"Filter Date: {filter_date}")
 
     if filter_type:
         transactions = transactions.filter(type=filter_type)
@@ -68,26 +64,13 @@ def dashboard(request):
         transactions = transactions.filter(category__name=filter_category)
     if filter_date:
         try:
-            date_filter = datetime.strptime(filter_date, '%Y-%m-%d').date()  # แปลงให้เป็น datetime.date
-            transactions = transactions.filter(date=date_filter)  # ใช้ date ตรง ๆ ไม่ต้องใช้ __date
+            date_filter = datetime.strptime(filter_date, '%Y-%m-%d').date()
+            transactions = transactions.filter(date=date_filter)
         except ValueError:
             pass
 
-
-    # Handle form submission
-    if request.method == 'POST':
-        form = TransactionForm(request.POST)
-        if form.is_valid():
-            transaction = form.save(commit=False)
-            transaction.user = request.user
-            transaction.save()
-            return redirect('dashboard')
-    else:
-        form = TransactionForm()
-
-    # Order transactions by date
-    transactions = transactions.order_by('-date')
     categories = Category.objects.all()
+    form = TransactionForm()
 
     context = {
         'transactions': transactions,
@@ -102,7 +85,7 @@ def dashboard(request):
         context['form_errors'] = form.errors
 
     return render(request, 'dashboard.html', context)
-# Add Category
+
 @login_required
 def add_category(request):
     if request.method == 'POST':
@@ -173,3 +156,17 @@ def delete_category(request, category_id):
     category.delete()
     return redirect('dashboard')
 
+
+@login_required
+def add_transaction(request):
+    if request.method == 'POST':
+        form = TransactionForm(request.POST)
+        if form.is_valid():
+            transaction = form.save(commit=False)
+            transaction.user = request.user
+            transaction.save()
+            return redirect('dashboard')
+    else:
+        form = TransactionForm()
+
+    return render(request, 'add_transaction.html', {'form': form})
