@@ -67,14 +67,29 @@ def dashboard(request):
 
     # หาวันแรกและวันสุดท้ายของเดือนที่เลือก
     first_day = datetime(current_year, current_month, 1).date()
-    next_month = first_day + timedelta(days=32)  # ข้ามไปเดือนถัดไป
+    next_month = first_day + timedelta(days=32)
     last_day = datetime(next_month.year, next_month.month, 1).date() - timedelta(days=1)
 
-    # กรองรายการเฉพาะเดือนที่เลือก
+    # ดึงธุรกรรมของผู้ใช้เฉพาะเดือนที่เลือก
     transactions = Transaction.objects.filter(
         user=request.user,
         date__range=[first_day, last_day]
     ).order_by('-date', '-id')
+
+    # 📌 เพิ่มการดึงค่ากรองจากฟอร์ม
+    filter_type = request.GET.get('filter_type', '')
+    filter_category = request.GET.get('filter_category', '')
+    filter_date = request.GET.get('filter_date', '')
+
+    # 📌 ใช้ค่ากรองกับ Query
+    if filter_type:
+        transactions = transactions.filter(type=filter_type)
+
+    if filter_category:
+        transactions = transactions.filter(category__name=filter_category)
+
+    if filter_date:
+        transactions = transactions.filter(date=filter_date)
 
     # คำนวณรายรับ-รายจ่ายเฉพาะเดือนที่เลือก
     total_income = transactions.filter(type='income').aggregate(total=Sum('amount'))['total'] or 0
@@ -86,20 +101,21 @@ def dashboard(request):
     next_month = last_day + timedelta(days=1)
 
     categories = Category.objects.all()
-    
+
     context = {
-        'transactions': transactions,
-        'categories': categories,
-        'total_income': total_income,
-        'total_expense': total_expense,
-        'balance': balance,
-        'current_month': current_month,
-        'current_year': current_year,
-        'prev_month': prev_month.month,
-        'prev_year': prev_month.year,
-        'next_month': next_month.month,
-        'next_year': next_month.year,
+    'transactions': transactions,
+    'categories': categories,
+    'total_income': total_income,
+    'total_expense': total_expense,
+    'balance': balance,
+    'current_month': current_month,
+    'current_year': current_year,
+    'prev_month': prev_month.month,
+    'prev_year': prev_month.year,
+    'next_month': next_month.month,
+    'next_year': next_month.year,  # แก้ตรงนี้
     }
+
     return render(request, 'dashboard.html', context)
 
 @login_required
