@@ -53,10 +53,14 @@ def user_logout(request):
 
 @login_required
 def dashboard(request):
-    # ดึงค่าปัจจุบันหรือค่าที่ผู้ใช้เลือก
+    # Get filter parameters from URL
+    filter_type = request.GET.get('filter_type', '')
+    filter_category = request.GET.get('filter_category', '')
+    filter_date = request.GET.get('filter_date', '')
+
+    # Get current month and year, if not set use today's date
     current_month = request.GET.get('month')
     current_year = request.GET.get('year')
-
     today = now().date()
     if not current_month or not current_year:
         current_month = today.month
@@ -65,23 +69,17 @@ def dashboard(request):
         current_month = int(current_month)
         current_year = int(current_year)
 
-    # หาวันแรกและวันสุดท้ายของเดือนที่เลือก
+    # Calculate the first and last day of the selected month
     first_day = datetime(current_year, current_month, 1).date()
-    next_month = first_day + timedelta(days=32)
+    next_month = first_day + timedelta(days=32)  # Skip to next month
     last_day = datetime(next_month.year, next_month.month, 1).date() - timedelta(days=1)
 
-    # ดึงธุรกรรมของผู้ใช้เฉพาะเดือนที่เลือก
+    # Filter transactions based on the selected filters
     transactions = Transaction.objects.filter(
         user=request.user,
         date__range=[first_day, last_day]
-    ).order_by('-date', '-id')
+    )
 
-    # 📌 เพิ่มการดึงค่ากรองจากฟอร์ม
-    filter_type = request.GET.get('filter_type', '')
-    filter_category = request.GET.get('filter_category', '')
-    filter_date = request.GET.get('filter_date', '')
-
-    # 📌 ใช้ค่ากรองกับ Query
     if filter_type:
         transactions = transactions.filter(type=filter_type)
 
@@ -91,29 +89,32 @@ def dashboard(request):
     if filter_date:
         transactions = transactions.filter(date=filter_date)
 
-    # คำนวณรายรับ-รายจ่ายเฉพาะเดือนที่เลือก
+    # Calculate total income, total expense, and balance for the selected month
     total_income = transactions.filter(type='income').aggregate(total=Sum('amount'))['total'] or 0
     total_expense = transactions.filter(type='expense').aggregate(total=Sum('amount'))['total'] or 0
     balance = total_income - total_expense
 
-    # คำนวณเดือนก่อนหน้าและถัดไป
+    # Calculate previous and next month
     prev_month = first_day - timedelta(days=1)
     next_month = last_day + timedelta(days=1)
 
     categories = Category.objects.all()
 
     context = {
-    'transactions': transactions,
-    'categories': categories,
-    'total_income': total_income,
-    'total_expense': total_expense,
-    'balance': balance,
-    'current_month': current_month,
-    'current_year': current_year,
-    'prev_month': prev_month.month,
-    'prev_year': prev_month.year,
-    'next_month': next_month.month,
-    'next_year': next_month.year,  # แก้ตรงนี้
+        'transactions': transactions,
+        'categories': categories,
+        'total_income': total_income,
+        'total_expense': total_expense,
+        'balance': balance,
+        'current_month': current_month,
+        'current_year': current_year,
+        'prev_month': prev_month.month,
+        'prev_year': prev_month.year,
+        'next_month': next_month.month,
+        'next_year': next_month.year,
+        'filter_type': filter_type,  # เก็บค่าฟิลเตอร์ไว้ใน context
+        'filter_category': filter_category,  # เก็บค่าฟิลเตอร์ไว้ใน context
+        'filter_date': filter_date,  # เก็บค่าฟิลเตอร์ไว้ใน context
     }
 
     return render(request, 'dashboard.html', context)
