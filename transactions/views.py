@@ -75,10 +75,12 @@ def dashboard(request):
     last_day = datetime(next_month.year, next_month.month, 1).date() - timedelta(days=1)
 
     # Filter transactions based on the selected filters
+    # เรียงลำดับ transactions โดยให้วันล่าสุดอยู่ด้านบน
     transactions = Transaction.objects.filter(
         user=request.user,
         date__range=[first_day, last_day]
-    )
+    ).order_by('-date')  # เพิ่ม .order_by('-date')
+
 
     if filter_type:
         transactions = transactions.filter(type=filter_type)
